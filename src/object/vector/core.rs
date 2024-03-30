@@ -120,6 +120,18 @@ impl Vector {
         }
     }
 
+    /// Materialize the Vector in-place
+    ///
+    /// Calls [crate::vector::rep::Rep::materialize_()].
+    pub fn materialize_(&mut self) {
+        match self {
+            Vector::Double(x) => x.materialize_(),
+            Vector::Integer(x) => x.materialize_(),
+            Vector::Logical(x) => x.materialize_(),
+            Vector::Character(x) => x.materialize_()
+        };
+    }
+
     pub fn vec_coerce<T, U>(v: &[OptionNA<T>]) -> Vec<OptionNA<U>>
     where
         T: CoercibleInto<U> + Clone,
@@ -196,18 +208,17 @@ impl Vector {
         }
     }
 
-    pub fn len(&self) -> usize {
-        use Vector::*;
+    pub fn len(&mut self) -> usize {
         match self {
-            Double(v) => v.len(),
-            Integer(v) => v.len(),
-            Logical(v) => v.len(),
-            Character(v) => v.len(),
+            Vector::Double(rep) => rep.len(),
+            Vector::Integer(rep) => rep.len(),
+            Vector::Logical(rep) => rep.len(),
+            Vector::Character(rep) => rep.len(),
         }
     }
 
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub fn is_empty(&mut self) -> bool {
         self.len() == 0
     }
 }

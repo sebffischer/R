@@ -26,3 +26,5 @@ mod runif;
 pub use runif::PrimitiveRunif;
 mod sum;
 pub use sum::PrimitiveSum;
+mod length;
+pub use length::PrimitiveLength;

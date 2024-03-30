@@ -22,7 +22,12 @@ impl Callable for PrimitivePrint {
 
     fn call_matched(&self, args: List, _ellipsis: List, stack: &mut CallStack) -> EvalResult {
         let mut args = Obj::List(args);
-        let x = args.try_get_named("x")?.force(stack)?;
+        let mut x = args.try_get_named("x")?.force(stack)?;
+
+        if let Obj::Vector(mut v) = x {
+            v.materialize_()
+        }
+
         println!("{x}");
         Ok(x)
     }

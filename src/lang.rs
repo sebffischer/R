@@ -251,7 +251,7 @@ impl Obj {
         }
     }
 
-    pub fn len(&self) -> Option<usize> {
+    pub fn len(&mut self) -> Option<usize> {
         match self {
             Obj::Vector(v) => Some(v.len()),
             Obj::List(l) => Some(l.len()),

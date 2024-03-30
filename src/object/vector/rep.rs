@@ -47,6 +47,7 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
         Rep::Subset(Rc::new(RefCell::new(Vec::new())), Subsets(Vec::new()))
     }
 
+
     /// Access the internal vector
     pub fn inner(&self) -> Rc<RefCell<Vec<T>>> {
         match self.materialize() {
@@ -68,17 +69,35 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
         }
     }
 
-    pub fn len(&self) -> usize {
+    /// Get the length of a vector
+    ///
+    /// If necessary, this will materialize the vector.
+    pub fn len(&mut self) -> usize {
+        self.materialize_();
+
         match self {
             Rep::Subset(v, Subsets(s)) => match s.as_slice() {
                 [] => v.clone().borrow().len(),
-                [.., last] => std::cmp::min(v.clone().borrow().len(), last.len()),
+                _ => todo!()
             },
         }
     }
 
+    /// Get Size hint for the Vector Representation
+    ///
+    /// Calculates the size hint as is available for Iterators.
+    pub fn size_hint(&self) -> (usize, Option<usize>) {
+
+        match *self {
+            Rep::Subset(v, Subsets(s)) => match s.as_slice() {
+                [] => (v.clone().borrow()).iter().size_hint(),
+                _ => unimplemented!()
+            }
+        }
+    }
+
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub fn is_empty(&mut self) -> bool {
         self.len() == 0
     }
 
@@ -145,6 +164,7 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
     where
         T: Clone,
     {
+        // FIXME: Use lower bound of size hints to pre-allocate vector
         match self {
             Rep::Subset(v, subsets) => {
                 let vc = v.clone();
@@ -163,6 +183,14 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
                 Rep::Subset(Rc::new(RefCell::new(res)), Subsets(vec![]))
             }
         }
+    }
+
+    /// Materialize in place
+    ///
+    /// This applies the computational graph from the lazy vector representation and modifies
+    /// itself in place to be a materialized vector.
+    pub fn materialize_(&mut self) {
+        *self = self.materialize()
     }
 
     /// Test the mode of the internal vector type
@@ -393,8 +421,32 @@ impl<T> Display for Rep<T>
 where
     T: AtomicMode + Debug + Default + Clone,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let n = self.len();
+    fn fmt(& self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let hint = self.size_hint();
+
+        let unknown_length = if let (lower, Some(upper)) = hint {
+            lower != upper
+        } else {
+            false
+        };
+
+        if unknown_length {
+            if self.is_double() {
+                return write!(f, "double(NA)");
+            }
+            if self.is_integer() {
+                return write!(f, "integer(NA)");
+            }
+            if self.is_logical() {
+                return write!(f, "logical(NA)");
+            }
+            if self.is_character() {
+                return write!(f, "character(NA)");
+            }
+        }
+
+
+        let n: usize = 1;
         if n == 0 {
             if self.is_double() {
                 return write!(f, "double(0)");
@@ -767,7 +819,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::OptionNA::*;
     use crate::object::rep::Rep;
     use crate::object::{types::*, VecPartialCmp};
