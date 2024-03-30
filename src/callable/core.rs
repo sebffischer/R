@@ -327,7 +327,7 @@ impl Callable for Obj {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::r;
 
     #[test]
@@ -336,7 +336,7 @@ mod test {
 
         assert_eq!(
             r! {{"
-                x <- function(n) { 
+                x <- function(n) {
                     if (n > 0) x(n - 1) else 'done'
                 }
 
@@ -352,14 +352,14 @@ mod test {
 
         assert_eq!(
             r! {{"
-                x <- function(a) { 
-                    a + b 
+                x <- function(a) {
+                    a + b
                 }
 
                 b <- 3
 
-                y <- function(c, b) { 
-                    x(c) * 2 + b 
+                y <- function(c, b) {
+                    x(c) * 2 + b
                 }
 
                 y(10, 100)

@@ -44,7 +44,7 @@ impl Callable for PrimitiveNames {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::error::Error;
     use crate::r;
 

@@ -246,7 +246,7 @@ impl Callable for KeywordBlock {
     }
 }
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::r;
 
     #[test]

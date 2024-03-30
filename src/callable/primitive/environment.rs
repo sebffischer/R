@@ -37,7 +37,7 @@ impl Callable for PrimitiveEnvironment {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::{r, r_expect};
 
     #[test]

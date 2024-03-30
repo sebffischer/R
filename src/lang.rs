@@ -975,7 +975,7 @@ pub fn assert_formals(session: &Session, formals: ExprList) -> Result<ExprList, 
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::r;
 

@@ -35,7 +35,7 @@ impl Callable for PrimitiveParent {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::{r, r_expect};
 
     #[test]

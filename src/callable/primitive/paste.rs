@@ -97,7 +97,7 @@ impl Callable for PrimitivePaste {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::object::types::*;
     use crate::r;
