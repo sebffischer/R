@@ -45,6 +45,11 @@ impl Subsets {
             names,
         }
     }
+
+    pub fn len(&self) -> usize {
+        let Subsets(subsets) = self;
+        subsets.len()
+    }
 }
 
 impl<T> From<Vec<T>> for Subsets

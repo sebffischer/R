@@ -13,7 +13,7 @@ use super::{OptionNA, Pow, VecPartialCmp};
 #[derive(Debug, Clone, PartialEq)]
 pub enum Rep<T> {
     // Vector::Subset encompasses a "raw" vector (no subsetting)
-    Subset(Rc<RefCell<Vec<T>>>, Subsets),
+    Subset(Rc<RefCell<Vec<T>>>, RefCell<Subsets>),
     // Iterator includes things like ranges 1:Inf, and lazily computed values
     // Iter(Box<dyn Iterator<Item = &T>>)
 }
@@ -44,7 +44,10 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
     /// ```
     ///
     pub fn new() -> Self {
-        Rep::Subset(Rc::new(RefCell::new(Vec::new())), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(Vec::new())),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 
     /// Access the internal vector
@@ -59,21 +62,23 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
     /// Introduce a new subset into the aggregate list of subset indices.
     ///
     pub fn subset(&self, subset: Subset) -> Self {
-        match self {
-            Rep::Subset(v, Subsets(subsets)) => {
-                let mut subsets = subsets.clone();
-                subsets.push(subset);
-                Rep::Subset(v.clone(), Subsets(subsets))
-            }
-        }
+        let Rep::Subset(vec, subsets) = self;
+        let Subsets(mut subsets_new) = subsets.borrow().clone();
+        subsets_new.push(subset);
+
+        Rep::Subset(vec.clone(), RefCell::new(Subsets(subsets_new)))
     }
 
     pub fn len(&self) -> usize {
         match self {
-            Rep::Subset(v, Subsets(s)) => match s.as_slice() {
-                [] => v.clone().borrow().len(),
-                [.., last] => std::cmp::min(v.clone().borrow().len(), last.len()),
-            },
+            Rep::Subset(vec, subsets) => {
+                let n_subsets = subsets.borrow().len();
+                if n_subsets == 0 {
+                    return vec.clone().borrow().len();
+                } else {
+                    todo!()
+                }
+            }
         }
     }
 
@@ -94,11 +99,11 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
             Rep::Subset(v, subsets) => {
                 let vc = v.clone();
                 let vb = vc.borrow();
-                let index = subsets.get_index_at(index)?;
+                let index = subsets.borrow().get_index_at(index)?;
                 let elem = vb.get(index)?;
                 Some(Rep::Subset(
                     Rc::new(RefCell::new(vec![elem.clone()])),
-                    Subsets::new(),
+                    RefCell::new(Subsets::new()),
                 ))
             }
         }
@@ -116,13 +121,21 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
         match (self, value) {
             (Rep::Subset(lv, ls), Rep::Subset(rv, rs)) => {
                 let lvc = lv.clone();
-                let mut lvb = lvc.borrow_mut();
+                let mut lvb = RefCell::borrow_mut(&lvc);
                 let rvc = rv.clone();
                 let rvb = rvc.borrow();
 
                 let lv_len = lvb.len();
-                let l_indices = ls.clone().into_iter().take_while(|(i, _)| i < &lv_len);
-                let r_indices = rs.clone().into_iter().take_while(|(i, _)| i < &lv_len);
+                let l_indices = ls
+                    .borrow()
+                    .clone()
+                    .into_iter()
+                    .take_while(|(i, _)| i < &lv_len);
+                let r_indices = rs
+                    .borrow()
+                    .clone()
+                    .into_iter()
+                    .take_while(|(i, _)| i < &lv_len);
 
                 for ((_, li), (_, ri)) in l_indices.zip(r_indices) {
                     match (li, ri) {
@@ -152,7 +165,11 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
                 let mut res: Vec<T> = vec![];
                 let vb_len = vb.len();
 
-                let iter = subsets.clone().into_iter().take_while(|(i, _)| i < &vb_len);
+                let iter = subsets
+                    .borrow()
+                    .clone()
+                    .into_iter()
+                    .take_while(|(i, _)| i < &vb_len);
                 for (_, i) in iter {
                     match i {
                         Some(i) => res.push(vb[i].clone()),
@@ -160,9 +177,18 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
                     }
                 }
 
-                Rep::Subset(Rc::new(RefCell::new(res)), Subsets(vec![]))
+                Rep::Subset(Rc::new(RefCell::new(res)), RefCell::new(Subsets(vec![])))
             }
         }
+    }
+
+    /// Materialize in place
+    ///
+    /// This applies the computational graph from the lazy vector representation and modifies
+    /// itself in place to be a materialized vector.
+    pub fn materialize_(&mut self) {
+        // FIXME: Implement this without the call to materialize() to avoid unnecessary clones.
+        *self = self.materialize()
     }
 
     /// Test the mode of the internal vector type
@@ -299,7 +325,7 @@ impl<T: AtomicMode + Clone + Default> Rep<T> {
             Rep::Subset(v, subsets) => {
                 let vc = v.clone();
                 let vb = vc.borrow();
-                let index = subsets.get_index_at(index)?;
+                let index = subsets.borrow().get_index_at(index)?;
                 vb.get(index).cloned()
             }
         }
@@ -325,56 +351,80 @@ where
 impl From<Vec<OptionNA<f64>>> for Rep<Double> {
     fn from(value: Vec<OptionNA<f64>>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
 impl From<Vec<f64>> for Rep<Double> {
     fn from(value: Vec<f64>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
 impl From<Vec<OptionNA<i32>>> for Rep<Integer> {
     fn from(value: Vec<OptionNA<i32>>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
 impl From<Vec<i32>> for Rep<Integer> {
     fn from(value: Vec<i32>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
 impl From<Vec<OptionNA<bool>>> for Rep<Logical> {
     fn from(value: Vec<OptionNA<bool>>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
 impl From<Vec<bool>> for Rep<Logical> {
     fn from(value: Vec<bool>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
 impl From<Vec<OptionNA<String>>> for Rep<Character> {
     fn from(value: Vec<OptionNA<String>>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
 impl From<Vec<String>> for Rep<Character> {
     fn from(value: Vec<String>) -> Self {
         let value: Vec<_> = value.into_iter().map(|i| i.coerce_into()).collect();
-        Rep::Subset(Rc::new(RefCell::new(value)), Subsets(Vec::new()))
+        Rep::Subset(
+            Rc::new(RefCell::new(value)),
+            RefCell::new(Subsets(Vec::new())),
+        )
     }
 }
 
@@ -384,7 +434,7 @@ where
 {
     fn from(value: (Vec<F>, Subsets)) -> Self {
         match Self::from(value.0) {
-            Rep::Subset(v, _) => Rep::Subset(v, value.1),
+            Rep::Subset(v, _) => Rep::Subset(v, RefCell::new(value.1)),
         }
     }
 }
