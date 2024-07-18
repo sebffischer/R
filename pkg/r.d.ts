@@ -83,13 +83,6 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly __wbg_cli_free: (a: number) => void;
-  readonly __wbg_get_cli_locale: (a: number) => number;
-  readonly __wbg_set_cli_locale: (a: number, b: number) => void;
-  readonly __wbg_get_cli_warranty: (a: number) => number;
-  readonly __wbg_set_cli_warranty: (a: number, b: number) => void;
-  readonly __wbg_get_cli_experiments: (a: number, b: number) => void;
-  readonly __wbg_set_cli_experiments: (a: number, b: number, c: number) => void;
   readonly __wbg_parseerror_free: (a: number) => void;
   readonly parseerror_start: (a: number) => number;
   readonly parseerror_end: (a: number) => number;
@@ -98,11 +91,18 @@ export interface InitOutput {
   readonly wasm_runtime: (a: number) => number;
   readonly wasm_parse_errors: (a: number, b: number, c: number, d: number) => void;
   readonly wasm_highlight: (a: number, b: number, c: number, d: number) => void;
+  readonly __wbg_cli_free: (a: number) => void;
+  readonly __wbg_get_cli_locale: (a: number) => number;
+  readonly __wbg_set_cli_locale: (a: number, b: number) => void;
+  readonly __wbg_get_cli_warranty: (a: number) => number;
+  readonly __wbg_set_cli_warranty: (a: number, b: number) => void;
+  readonly __wbg_get_cli_experiments: (a: number, b: number) => void;
+  readonly __wbg_set_cli_experiments: (a: number, b: number, c: number) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_export_2: WebAssembly.Table;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
-  readonly wasm_bindgen__convert__closures__invoke2__h5c93a7cf6ccb89ef: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+  readonly _dyn_core__ops__function__Fn__A_B___Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__h489eab4204a9e42b: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_exn_store: (a: number) => void;
 }
