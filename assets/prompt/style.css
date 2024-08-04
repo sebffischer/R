@@ -1,0 +1,187 @@
+.prompt-output-scroll {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  -webkit-mask-image: -webkit-linear-gradient(bottom, rgba(0,0,0,1) max(15em, 35vh), rgba(0,0,0,0.2) max(25em, 60vh));
+}
+
+.prompt-output-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.prompt-output-scroll-pad {
+  height: inherit;
+}
+
+.prompt-output-cell {
+  position: relative;
+  font-family: monospace, mono;
+  white-space: pre;
+  line-height: 1.4em;
+  color: var(--fg);
+  padding: 0.25em 0.5em;
+  margin: 0.25em 0;
+  border-radius: 0.5em;
+}
+
+.prompt-input-cell:hover {
+  background: var(--gray3);
+}
+
+.prompt-input-cell:active {
+  background: var(--gray2);
+}
+
+.prompt-input-cell, .prompt-output-cell {
+  background: var(--gray2);
+}
+
+.prompt-input-cell .prompt-output-cell {
+  background: var(--gray0);
+  color: var(--fg);
+}
+
+.prompt-output-cell {
+  text-wrap-mode: wrap;
+}
+
+.prompt-error-cell {
+  background: color-mix(in lch, #D11 25%, var(--bg));
+  color: color-mix(in lch, #D11 25%, var(--fg));
+}
+
+.prompt-error-cell a {
+  color: color-mix(in lch, #D11 50%, var(--fg));
+}
+
+.prompt-submit {
+  background: #58F;
+  color: white;
+}
+
+.prompt-submit:hover {
+  background: #69F;
+}
+
+.prompt-submit:active {
+  background: #7AF;
+}
+
+.prompt-clear {
+  background: none;
+}
+
+.prompt-input-container {
+  position: relative;  
+}
+
+.prompt-input-container * {
+  font-size: calc(1rem * var(--font-scale));
+}
+
+.prompt-input-textarea, .prompt-highlight, .prompt-diagnostics {
+  box-sizing: border-box;
+
+  font-family: monospace, mono;
+  white-space: pre;
+  line-height: 1.4em;
+  width: 100%;
+  resize: vertical;
+
+  background: var(--gray1);
+  color: var(--fg);
+
+  border-radius: 0.5em;
+  border-width: 0.2em;
+  border-style: solid;
+  border-color: var(--gray2);
+  padding: 1em;
+  padding-bottom: 0.5em;
+}
+
+.prompt-highlight, .prompt-diagnostics {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  z-index: -1000;
+}
+
+.prompt-diagnostics {
+  background: transparent;
+  border-color: transparent;
+}
+
+.prompt-run, .prompt-share {
+  position: absolute;
+  background: var(--fg);
+  opacity: 50%;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-position: 50% 50%;
+  mask-position: 50% 50%;
+}
+
+@media (hover: hover) {
+  .prompt-run, .prompt-share {
+    visibility: hidden;
+    opacity: 0%;
+  }
+}
+
+.prompt-run {
+  right: 1em;  
+  bottom: 0.75em;
+  padding: 1em;
+}
+
+.prompt-share {
+  top: 0.5em;
+  right: 0.5em;  
+  padding: 0.75em;  
+}
+
+.prompt-run {
+  -webkit-mask-image: url("../img/play.svg");
+  mask-image: url("../img/play.svg"); 
+}
+
+.prompt-share {
+  -webkit-mask-image: url("../img/share.svg");
+  mask-image: url("../img/share.svg"); 
+}
+
+.prompt-input-textarea:hover ~ .prompt-run, .prompt-output-cell:hover .prompt-share {
+  visibility: visible;
+  opacity: 50%;
+}
+
+.prompt-input-textarea ~ .prompt-run:hover, .prompt-output-cell .prompt-share:hover {
+  visibility: visible;
+  opacity: 100%;
+}
+
+.prompt-input-textarea {
+  position: relative; 
+  color: transparent !important;
+  caret-color: var(--fg);
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+.prompt-input-textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.prompt-input-textarea:focus {
+  outline: 0;
+}
+
+.prompt-input-textarea:focus + .prompt-highlight {
+  border-color: var(--gray4);
+}
