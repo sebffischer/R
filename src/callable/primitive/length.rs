@@ -2,6 +2,7 @@ use r_derive::*;
 
 use crate::callable::core::*;
 use crate::error::Error;
+use crate::formals;
 use crate::lang::*;
 use crate::object::*;
 
@@ -32,10 +33,9 @@ use crate::object::*;
 #[derive(Debug, Clone, PartialEq)]
 pub struct PrimitiveLength;
 
+formals!(PrimitiveLength, "(x,)");
+
 impl Callable for PrimitiveLength {
-    fn formals(&self) -> ExprList {
-        ExprList::from(vec![(Some("x".to_string()), Expr::Missing)])
-    }
     fn call_matched(&self, args: List, _ellipsis: List, stack: &mut CallStack) -> EvalResult {
         let mut args = Obj::List(args);
         let x = args.try_get_named("x")?.force(stack)?;
@@ -47,7 +47,7 @@ impl Callable for PrimitiveLength {
                 Vector::Logical(rep) => rep.len(),
                 Vector::Character(rep) => rep.len(),
             },
-            Obj::List(_) => todo!("Not implemented yet"),
+            Obj::List(rep) => rep.len(),
             Obj::Environment(env) => env.len(),
             _ => return Error::Other("Argument 'x' does not have a length".into()).into(),
         };
@@ -109,5 +109,12 @@ mod tests {
             r! {length(null)},
             EvalResult::Err(Error::Other("Argument 'x' does not have a length".to_string()).into())
         )
+    }
+
+    #[test]
+    fn list() {
+        r_expect! {{"
+            length(list(1)) == 1 && length(list()) == 0
+        "}}
     }
 }

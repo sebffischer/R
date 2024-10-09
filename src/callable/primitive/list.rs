@@ -2,6 +2,7 @@ use r_derive::*;
 
 use crate::callable::core::*;
 use crate::context::Context;
+use crate::formals;
 use crate::lang::*;
 use crate::object::*;
 
@@ -25,6 +26,11 @@ use crate::object::*;
 ///
 /// `...`: Arguments to collect into a `list`.
 ///
+/// ## Differences to the R implementation
+///
+/// Setting a list value to `null` does not remove the element but
+/// sets it to the value `null`.
+///
 /// ## Examples
 ///
 /// ```custom,{class=r-repl}
@@ -44,11 +50,13 @@ use crate::object::*;
 /// ```custom,{class=r-repl}
 /// (1,)
 /// ```
-///
 #[doc(alias = "list")]
 #[builtin(sym = "list")]
 #[derive(Debug, Clone, PartialEq)]
 pub struct PrimitiveList;
+
+formals!(PrimitiveList, "(...)");
+
 impl Callable for PrimitiveList {
     fn call(&self, args: ExprList, stack: &mut CallStack) -> EvalResult {
         stack.eval_list_eager(args)

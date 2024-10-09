@@ -1,9 +1,10 @@
-use r_derive::*;
-
 use crate::callable::core::*;
 use crate::error::*;
+use crate::formals;
 use crate::lang::*;
+use crate::object::types::Character;
 use crate::object::*;
+use r_derive::*;
 
 /// Paste Objects into Strings
 ///
@@ -44,19 +45,15 @@ use crate::object::*;
 #[builtin(sym = "paste")]
 #[derive(Debug, Clone, PartialEq)]
 pub struct PrimitivePaste;
-impl Callable for PrimitivePaste {
-    fn formals(&self) -> ExprList {
-        ExprList::from(vec![
-            (None, Expr::Ellipsis(None)),
-            (Some(String::from("sep")), Expr::String(" ".to_string())),
-            (Some(String::from("collapse")), Expr::Null),
-        ])
-    }
 
+formals!(PrimitivePaste, "(..., sep = ' ', collapse = null)");
+
+impl Callable for PrimitivePaste {
     fn call(&self, args: ExprList, stack: &mut CallStack) -> EvalResult {
         let (args, ellipsis) = self.match_arg_exprs(args, stack)?;
 
         let ellipsis = force_promises(ellipsis, stack)?;
+
         let args = force_promises(args, stack)?;
 
         let mut sep = String::from(" ");
@@ -65,7 +62,7 @@ impl Callable for PrimitivePaste {
 
         // remove named sep and collapse args from our arguments and populate values
         for (k, v) in args.iter().rev() {
-            let Some(k) = k else { continue };
+            let Character::Some(k) = k else { continue };
 
             match (k.as_str(), v) {
                 ("sep", Obj::Vector(v)) => {
@@ -127,7 +124,6 @@ impl Callable for PrimitivePaste {
         if should_collapse {
             output = vec![output.join(&collapse)];
         }
-
         Ok(Obj::Vector(output.into()))
     }
 }
@@ -135,7 +131,7 @@ impl Callable for PrimitivePaste {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::object::types::*;
+
     use crate::r;
 
     #[test]
